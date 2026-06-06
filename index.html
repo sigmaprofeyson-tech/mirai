@@ -3,49 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MİRAİ - Link Tree</title>
+    
+    <title>MİRAİ Social</title>
+    <link id="dynamicFavicon" rel="icon" type="image/x-icon" href="">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            background-color: #050505; 
+            overflow: hidden; background-color: #050505; 
         }
 
         #bg-image {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('background.gif'); 
-            background-size: cover; 
-            background-position: center;
-            z-index: 1; 
+            background-size: cover; background-position: center;
+            z-index: 1; transition: opacity 0.5s ease;
         }
 
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 2;
+            background: rgba(0, 0, 0, 0.6); z-index: 2;
         }
 
-        #canvas {
-            position: fixed; top: 0; left: 0;
-            z-index: 3; 
-            pointer-events: none; 
+        #canvas, #rainCanvas {
+            position: fixed; top: 0; left: 0; pointer-events: none;
         }
-
-        #rainCanvas {
-            position: fixed; top: 0; left: 0;
-            z-index: 4;
-            pointer-events: none;
-        }
+        #canvas { z-index: 3; }
+        #rainCanvas { z-index: 4; }
 
         .center-wrapper {
             position: absolute; top: 55%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%; /* Mobilde taşmasın diye esnek yapıldı */
-            max-width: 340px; /* PC'de orijinal genişliğini korur */
-            display: flex; flex-direction: column; gap: 15px;
-            z-index: 5;
+            transform: translate(-50%, -50%); width: 90%; max-width: 340px; 
+            display: flex; flex-direction: column; gap: 15px; z-index: 5;
         }
 
         .glass-panel {
@@ -71,21 +62,19 @@
         }
         .profile-wrapper img {
             width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+            opacity: 0; transition: opacity 0.5s ease;
         }
 
         .username {
-            color: #fff; font-size: 1.3rem; font-weight: 800;
-            margin-bottom: 30px; letter-spacing: 3px;
-            text-shadow: 0 0 15px rgba(160, 32, 240, 1);
+            color: #fff; font-size: 1.5rem; font-family: 'Montserrat', sans-serif; 
+            font-weight: 800; margin-bottom: 30px; letter-spacing: 5px; 
+            text-transform: uppercase; text-shadow: 0 0 15px rgba(160, 32, 240, 0.8), 0 0 30px rgba(160, 32, 240, 0.4); 
         }
 
         .social-link {
-            display: flex; align-items: center;
-            width: 100%; padding: 15px 20px; margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 15px; color: white;
-            text-decoration: none; font-weight: bold; letter-spacing: 1px;
+            display: flex; align-items: center; width: 100%; padding: 15px 20px; margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 15px; color: white; text-decoration: none; font-weight: bold; letter-spacing: 1px;
             box-sizing: border-box; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative; overflow: hidden;
         }
@@ -93,8 +82,7 @@
         .social-link i { font-size: 24px; width: 40px; text-align: center; }
 
         .social-link::before {
-            content: ''; position: absolute; top: 0; left: -100%;
-            width: 50%; height: 100%;
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: all 0.5s;
         }
@@ -110,112 +98,46 @@
         .disabled:hover { border-color: rgba(255, 0, 0, 0.2); }
 
         .music-player {
-            width: 100%; padding: 15px 20px; box-sizing: border-box;
-            display: flex; align-items: center; gap: 15px;
-            border-radius: 20px;
+            width: 100%; padding: 15px 20px; box-sizing: border-box; display: flex; align-items: center; gap: 15px; border-radius: 20px;
         }
 
         .play-btn {
-            background: rgba(160, 32, 240, 0.2);
-            border: 1px solid rgba(160, 32, 240, 0.5);
+            background: rgba(160, 32, 240, 0.2); border: 1px solid rgba(160, 32, 240, 0.5);
             color: white; width: 45px; height: 45px; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer; font-size: 16px; transition: all 0.3s;
-            box-shadow: 0 0 10px rgba(160, 32, 240, 0.3);
-            flex-shrink: 0;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; 
+            font-size: 16px; transition: all 0.3s; box-shadow: 0 0 10px rgba(160, 32, 240, 0.3); flex-shrink: 0;
         }
 
-        .play-btn:hover {
-            background: rgba(160, 32, 240, 0.6);
-            transform: scale(1.1);
-        }
+        .play-btn:hover { background: rgba(160, 32, 240, 0.6); transform: scale(1.1); }
 
-        .music-info {
-            display: flex; flex-direction: column; width: 100%; gap: 8px;
-            overflow: hidden;
-        }
-
-        .song-name-wrapper {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            position: relative;
-        }
-
+        .music-info { display: flex; flex-direction: column; width: 100%; gap: 8px; overflow: hidden; }
+        .song-name-wrapper { width: 100%; overflow: hidden; white-space: nowrap; position: relative; }
         .song-name {
-            display: inline-block;
-            color: #fff; 
-            font-size: 0.85rem; 
-            font-family: 'Courier New', monospace;
-            letter-spacing: 1px;
-            white-space: nowrap;
-            animation: neonScroll 8s linear infinite;
-            text-shadow: 
-                0 0 5px #a020f0,
-                0 0 10px #a020f0,
-                0 0 20px #a020f0,
-                0 0 40px #a020f0;
-            padding-left: 100%;
+            display: inline-block; color: #fff; font-size: 0.85rem; font-family: 'Courier New', monospace;
+            letter-spacing: 1px; white-space: nowrap; animation: neonScroll 8s linear infinite;
+            text-shadow: 0 0 5px #a020f0, 0 0 10px #a020f0, 0 0 20px #a020f0, 0 0 40px #a020f0; padding-left: 100%;
         }
 
-        @keyframes neonScroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
+        @keyframes neonScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        input[type=range] {
-            -webkit-appearance: none; width: 100%; background: transparent;
-        }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]:focus { outline: none; }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; cursor: pointer;
-            background: rgba(255, 255, 255, 0.2); border-radius: 2px;
-        }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
         input[type=range]::-webkit-slider-thumb {
-            height: 12px; width: 12px; border-radius: 50%;
-            background: #a020f0; cursor: pointer;
-            -webkit-appearance: none; margin-top: -4px;
+            height: 12px; width: 12px; border-radius: 50%; background: #a020f0; cursor: pointer; -webkit-appearance: none; margin-top: -4px;
             box-shadow: 0 0 10px #a020f0; transition: transform 0.2s;
         }
-        input[type=range]::-webkit-slider-thumb:hover {
-            transform: scale(1.3);
-        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
 
-        /* ==========================================
-           TELEFONLAR İÇİN MOBİL OPTİMİZASYON (MEDIA QUERY)
-           ========================================== */
         @media (max-width: 480px) {
-            .center-wrapper {
-                top: 57%; /* Tepedeki MİRAİ yazısıyla çakışmayı önler */
-                gap: 10px;
-            }
-            .glass-container {
-                padding: 25px 20px; /* Telefonda dikey taşmayı önlemek için daraltıldı */
-            }
-            .profile-wrapper {
-                width: 90px; height: 90px; /* Resim hafif küçültüldü */
-                margin-bottom: 10px;
-            }
-            .username {
-                margin-bottom: 20px;
-                font-size: 1.15rem;
-            }
-            .social-link {
-                padding: 12px 15px; /* Buton yükseklikleri mobil uyumlu yapıldı */
-                margin-bottom: 10px;
-                font-size: 0.9rem;
-            }
-            .social-link i {
-                font-size: 20px;
-                width: 32px;
-            }
-            .music-player {
-                padding: 12px 15px;
-            }
-            .play-btn {
-                width: 40px; height: 40px;
-                font-size: 14px;
-            }
+            .center-wrapper { top: 57%; gap: 10px; }
+            .glass-container { padding: 25px 20px; }
+            .profile-wrapper { width: 90px; height: 90px; margin-bottom: 10px; }
+            .username { margin-bottom: 20px; font-size: 1.25rem; }
+            .social-link { padding: 12px 15px; margin-bottom: 10px; font-size: 0.9rem; }
+            .social-link i { font-size: 20px; width: 32px; }
+            .music-player { padding: 12px 15px; }
+            .play-btn { width: 40px; height: 40px; font-size: 14px; }
         }
     </style>
 <base target="_blank">
@@ -227,16 +149,15 @@
     <canvas id="canvas"></canvas>
     <canvas id="rainCanvas"></canvas>
 
-    <audio id="bg-music" loop>
-        <source src="music.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bg-music" loop></audio>
 
     <div class="center-wrapper">
         <div class="glass-panel glass-container">
             <div class="profile-wrapper">
-                <img src="profile.jpg" alt="Profile" id="profileImg" onerror="this.src='https://via.placeholder.com/150/111/fff?text=MIRAI'">
+                <img src="" alt="Profile" id="profileImg">
             </div>
-            <div class="username">@MİRAİ</div>
+            
+            <div class="username">MİRAİ</div>
 
             <a href="https://tiktok.com/@mirai.vl" target="_blank" class="social-link">
                 <i class="fab fa-tiktok"></i> TikTok
@@ -256,253 +177,182 @@
         </div>
 
         <div class="glass-panel music-player">
-            <button class="play-btn" id="playBtn">
-                <i class="fas fa-play" id="playIcon"></i>
-            </button>
+            <button class="play-btn" id="playBtn"><i class="fas fa-play" id="playIcon"></i></button>
             <div class="music-info">
-                <div class="song-name-wrapper">
-                    <div class="song-name" id="songDisplay">Farazi V Kayra - Bir fotoğrafın rüyası</div>
-                </div>
+                <div class="song-name-wrapper"><div class="song-name" id="songDisplay">Yükleniyor...</div></div>
                 <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.3">
             </div>
         </div>
     </div>
 
     <script>
-        // Müzik Oynatıcı Kontrolleri
+        // =========================================================================
+        // 🔥 AYAR MERKEZİ 🔥
+        // =========================================================================
+        // Klasöründeki şarkının tam adını (uzantısıyla) buraya yaz.
+        // Kod gerisini kendi ayıklayıp, ekrana düzgünce yazdıracak.
+        const SARKI_DOSYASI = "Black Beatles.mp3"; 
+        // =========================================================================
+
+        // --- 1. MÜZİK MOTORU VE AYIKLAYICI ---
         const audio = document.getElementById('bg-music');
+        const songDisplay = document.getElementById('songDisplay');
+
+        if("Black Beatles.mp3") {
+            audio.src = "Black Beatles.mp3";
+            audio.load();
+            // Dosyanın adındaki .mp3 kısmını kesip temiz isim elde ediyoruz
+            songDisplay.innerText = "Black Beatles.mp3".replace(/\.mp3$/i, '');
+        }
+
+        // --- 2. HATA VERMEYEN AKILLI GÖRSEL MOTORU (YENİ SİSTEM) ---
+        // Tüm olası uzantıları sırayla, çökmeyecek bir paralel mantıkla arar.
+        const resimFormatlari = ['gif', 'jpg', 'png', 'jpeg', 'webp', 'GIF', 'JPG', 'PNG'];
+        
+        // Arka Plan Yükleyici
+        const bgImageEl = document.getElementById('bg-image');
+        let bgBulundu = false;
+        resimFormatlari.forEach(ext => {
+            let img = new Image();
+            img.onload = () => {
+                if(!bgBulundu) { bgImageEl.style.backgroundImage = `url('background.${ext}')`; bgBulundu = true; }
+            };
+            img.src = `background.${ext}`;
+        });
+
+        // Profil ve Favicon Yükleyici
+        const profileImgEl = document.getElementById('profileImg');
+        const faviconEl = document.getElementById('dynamicFavicon');
+        let profilBulundu = false;
+        resimFormatlari.forEach(ext => {
+            let img = new Image();
+            img.onload = () => {
+                if(!profilBulundu) {
+                    profileImgEl.src = `profile.${ext}`;
+                    profileImgEl.style.opacity = '1';
+                    if(faviconEl) faviconEl.href = `profile.${ext}`;
+                    profilBulundu = true;
+                }
+            };
+            img.src = `profile.${ext}`;
+        });
+
+        // Eğer 2 saniye içinde hiçbir profil resmi bulunamazsa varsayılanı yükle
+        setTimeout(() => {
+            if(!profilBulundu) { profileImgEl.src = 'https://via.placeholder.com/150/111/fff?text=MIRAI'; profileImgEl.style.opacity = '1'; }
+        }, 2000);
+
+
+        // --- 3. MÜZİK ÇALAR ARAYÜZ KONTROLLERİ ---
         const playBtn = document.getElementById('playBtn');
         const playIcon = document.getElementById('playIcon');
         const volumeSlider = document.getElementById('volumeSlider');
-        const songDisplay = document.getElementById('songDisplay');
-
         audio.volume = volumeSlider.value;
 
-        // Müzik Durum Güncelleme Fonksiyonu
         function setMusicPlayingUI() {
-            playIcon.classList.remove('fa-play');
-            playIcon.classList.add('fa-pause');
+            playIcon.classList.remove('fa-play'); playIcon.classList.add('fa-pause');
             songDisplay.style.textShadow = '0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff';
             songDisplay.style.color = '#ffb3ff';
         }
 
         function setMusicPausedUI() {
-            playIcon.classList.remove('fa-pause');
-            playIcon.classList.add('fa-play');
+            playIcon.classList.remove('fa-pause'); playIcon.classList.add('fa-play');
             songDisplay.style.textShadow = '0 0 5px #a020f0, 0 0 10px #a020f0, 0 0 20px #a020f0, 0 0 40px #a020f0';
             songDisplay.style.color = '#fff';
         }
 
-        // Manuel Tıklama Dinleyicisi
         playBtn.addEventListener('click', () => {
-            if (audio.paused) {
-                audio.play();
-                setMusicPlayingUI();
-            } else {
-                audio.pause();
-                setMusicPausedUI();
-            }
+            if (audio.paused) { audio.play(); setMusicPlayingUI(); } 
+            else { audio.pause(); setMusicPausedUI(); }
         });
 
-        volumeSlider.addEventListener('input', (e) => {
-            audio.volume = e.target.value;
-        });
+        volumeSlider.addEventListener('input', (e) => { audio.volume = e.target.value; });
 
-        // ==========================================
-        // GİRDİĞİNDE DİREKT ÇALMA (AUTOPLAY MOTORU)
-        // ==========================================
+        // Autoplay Denemesi (Kullanıcı etkileşimi bekler)
         function tryAutoplay() {
-            audio.play().then(() => {
-                // Tarayıcı izin verirse direkt çalar ve UI güncellenir
-                setMusicPlayingUI();
-            }).catch(err => {
-                // Tarayıcı engellerse, kullanıcının ekrandaki İLK DOKUNUŞUNDA tetiklenir
-                console.log("Autoplay engellendi. İlk etkileşimle müzik başlayacak.");
-                
+            audio.play().then(() => { setMusicPlayingUI(); }).catch(() => {
                 const playOnFirstInteraction = () => {
-                    audio.play().then(() => {
-                        setMusicPlayingUI();
-                        // Dinleyicileri temizle ki her tıkta çalışmasın
-                        window.removeEventListener('click', playOnFirstInteraction);
-                        window.removeEventListener('touchstart', playOnFirstInteraction);
-                    });
+                    audio.play().then(() => { setMusicPlayingUI(); });
+                    window.removeEventListener('click', playOnFirstInteraction);
+                    window.removeEventListener('touchstart', playOnFirstInteraction);
                 };
-                
                 window.addEventListener('click', playOnFirstInteraction);
                 window.addEventListener('touchstart', playOnFirstInteraction);
             });
         }
-
-        // Sayfa tamamen hazır olunca autoplay sistemini ateşle
         window.addEventListener('DOMContentLoaded', tryAutoplay);
 
-
-        // ==========================================
-        // CAMA DÜŞEN SU DAMLALARI EFEKTİ
-        // ==========================================
+        // --- 4. CAMA DÜŞEN SU DAMLALARI ---
         const rainCanvas = document.getElementById('rainCanvas');
         const rCtx = rainCanvas.getContext('2d');
         let raindrops = [];
-
-        function resizeRain() {
-            rainCanvas.width = window.innerWidth;
-            rainCanvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeRain);
-        resizeRain();
+        function resizeRain() { rainCanvas.width = window.innerWidth; rainCanvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeRain); resizeRain();
 
         class RainDrop {
-            constructor() {
-                this.reset(true);
-            }
-
+            constructor() { this.reset(true); }
             reset(initial = false) {
-                this.x = Math.random() * rainCanvas.width;
-                this.y = initial ? Math.random() * rainCanvas.height : -20;
-                this.r = Math.random() * 2.5 + 1;
-                this.speedY = Math.random() * 0.5 + 0.1;
-                this.opacity = Math.random() * 0.4 + 0.2;
+                this.x = Math.random() * rainCanvas.width; this.y = initial ? Math.random() * rainCanvas.height : -20;
+                this.r = Math.random() * 2.5 + 1; this.speedY = Math.random() * 0.5 + 0.1; this.opacity = Math.random() * 0.4 + 0.2;
             }
-
             update() {
-                if (Math.random() < 0.005) {
-                    this.speedY += Math.random() * 2 + 1;
-                }
-                this.speedY *= 0.98;
-                if(this.speedY < 0.2) this.speedY = 0.2 + Math.random() * 0.5;
-
-                this.y += this.speedY;
-
-                if (this.y > rainCanvas.height + 20) {
-                    this.reset();
-                }
+                if (Math.random() < 0.005) { this.speedY += Math.random() * 2 + 1; }
+                this.speedY *= 0.98; if(this.speedY < 0.2) this.speedY = 0.2 + Math.random() * 0.5;
+                this.y += this.speedY; if (this.y > rainCanvas.height + 20) { this.reset(); }
             }
-
             draw() {
-                rCtx.save();
-                rCtx.globalAlpha = this.opacity;
-                
-                rCtx.beginPath();
-                rCtx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-                rCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                rCtx.fill();
-                
-                rCtx.beginPath();
-                rCtx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.4, 0, Math.PI * 2);
-                rCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                rCtx.fill();
-
-                rCtx.beginPath();
-                rCtx.arc(this.x + this.r * 0.2, this.y + this.r * 0.3, this.r * 0.3, 0, Math.PI * 2);
-                rCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                rCtx.fill();
-                
+                rCtx.save(); rCtx.globalAlpha = this.opacity;
+                rCtx.beginPath(); rCtx.arc(this.x, this.y, this.r, 0, Math.PI * 2); rCtx.fillStyle = 'rgba(0, 0, 0, 0.3)'; rCtx.fill();
+                rCtx.beginPath(); rCtx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.4, 0, Math.PI * 2); rCtx.fillStyle = 'rgba(255, 255, 255, 0.7)'; rCtx.fill();
+                rCtx.beginPath(); rCtx.arc(this.x + this.r * 0.2, this.y + this.r * 0.3, this.r * 0.3, 0, Math.PI * 2); rCtx.fillStyle = 'rgba(255, 255, 255, 0.3)'; rCtx.fill();
                 rCtx.restore();
-                
                 if (this.speedY > 1.5) {
-                    rCtx.beginPath();
-                    rCtx.moveTo(this.x, this.y - this.r);
-                    rCtx.lineTo(this.x, this.y - this.r - this.speedY * 4);
-                    rCtx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.3})`;
-                    rCtx.lineWidth = this.r * 0.8;
-                    rCtx.stroke();
+                    rCtx.beginPath(); rCtx.moveTo(this.x, this.y - this.r); rCtx.lineTo(this.x, this.y - this.r - this.speedY * 4);
+                    rCtx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.3})`; rCtx.lineWidth = this.r * 0.8; rCtx.stroke();
                 }
             }
         }
-
         function initRain() {
-            raindrops = [];
-            const count = Math.min(Math.floor(window.innerWidth / 15), 150);
+            raindrops = []; const count = Math.min(Math.floor(window.innerWidth / 15), 150);
             for(let i = 0; i < count; i++) raindrops.push(new RainDrop());
         }
-
         function animateRain() {
             rCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
-            raindrops.forEach(d => {
-                d.update();
-                d.draw();
-            });
+            raindrops.forEach(d => { d.update(); d.draw(); });
             requestAnimationFrame(animateRain);
         }
+        initRain(); animateRain();
 
-        initRain();
-        animateRain();
-
-        // ==========================================
-        // MİRAİ KAPALI MOR PARÇACIK SİSTEMİ (MOBİL UYUMLU DOKUNMATİK)
-        // ==========================================
+        // --- 5. MİRAİ KAPALI MOR PARÇACIK SİSTEMİ ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        let w = canvas.width = window.innerWidth;
-        let h = canvas.height = window.innerHeight;
-        let particles = [];
-        let mouse = { x: -1000, y: -1000, radius: 120 };
+        let w = canvas.width = window.innerWidth; let h = canvas.height = window.innerHeight;
+        let particles = []; let mouse = { x: -1000, y: -1000, radius: 120 };
 
-        // Hem Fare Hareketlerini Hem de Mobil Dokunmaları Dinleyen Birleşik Yapı
         const handleInteraction = (e) => {
-            if (e.touches && e.touches.length > 0) {
-                // Mobil Dokunma Koordinatları
-                mouse.x = e.touches[0].clientX;
-                mouse.y = e.touches[0].clientY;
-            } else {
-                // PC Fare Koordinatları
-                mouse.x = e.clientX;
-                mouse.y = e.clientY;
-            }
+            if (e.touches && e.touches.length > 0) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; } 
+            else { mouse.x = e.clientX; mouse.y = e.clientY; }
         };
-
-        window.addEventListener('mousemove', handleInteraction);
-        window.addEventListener('touchmove', handleInteraction);
-        window.addEventListener('touchstart', handleInteraction);
-
-        // Parmağı Ekrandan Çekince veya Fare Çıkınca Koordinatları Sıfırla
+        window.addEventListener('mousemove', handleInteraction); window.addEventListener('touchmove', handleInteraction); window.addEventListener('touchstart', handleInteraction);
         const clearInteraction = () => { mouse.x = -1000; mouse.y = -1000; };
-        window.addEventListener('mouseout', clearInteraction);
-        window.addEventListener('touchend', clearInteraction);
+        window.addEventListener('mouseout', clearInteraction); window.addEventListener('touchend', clearInteraction);
 
-        const koyuMorTonlari = [
-            'rgba(75, 0, 130, 0.9)',
-            'rgba(106, 13, 173, 0.9)',
-            'rgba(85, 0, 130, 0.9)',
-            'rgba(128, 0, 128, 0.85)',
-            'rgba(102, 51, 153, 0.9)',
-            'rgba(139, 0, 139, 0.85)',
-            'rgba(148, 0, 211, 0.85)',
-            'rgba(153, 50, 204, 0.85)'
-        ];
+        const koyuMorTonlari = ['rgba(75, 0, 130, 0.9)', 'rgba(106, 13, 173, 0.9)', 'rgba(85, 0, 130, 0.9)', 'rgba(128, 0, 128, 0.85)', 'rgba(102, 51, 153, 0.9)', 'rgba(139, 0, 139, 0.85)', 'rgba(148, 0, 211, 0.85)', 'rgba(153, 50, 204, 0.85)'];
 
         class Particle {
             constructor(x, y, color) {
-                this.x = Math.random() * w;
-                this.y = Math.random() * h;
-                this.baseX = x; this.baseY = y;
-                this.size = Math.random() * 2.5 + 1.8;
-                this.color = color;
-                this.density = (Math.random() * 20) + 5;
+                this.x = Math.random() * w; this.y = Math.random() * h; this.baseX = x; this.baseY = y;
+                this.size = Math.random() * 2.5 + 1.8; this.color = color; this.density = (Math.random() * 20) + 5;
             }
             draw() {
-                ctx.save();
-                ctx.shadowBlur = 25;
-                ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
+                ctx.save(); ctx.shadowBlur = 25; ctx.shadowColor = this.color; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore();
             }
             update() {
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-
+                let dx = mouse.x - this.x; let dy = mouse.y - this.y; let distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance < mouse.radius) {
-                    let forceDirectionX = dx / distance;
-                    let forceDirectionY = dy / distance;
-                    let force = (mouse.radius - distance) / mouse.radius;
-                    let directionX = forceDirectionX * force * this.density;
-                    let directionY = forceDirectionY * force * this.density;
-                    this.x -= directionX; 
-                    this.y -= directionY;
+                    let forceDirectionX = dx / distance; let forceDirectionY = dy / distance; let force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= forceDirectionX * force * this.density; this.y -= forceDirectionY * force * this.density;
                 } else {
                     if (this.x !== this.baseX) { this.x -= (this.x - this.baseX) / 15; }
                     if (this.y !== this.baseY) { this.y -= (this.y - this.baseY) / 15; }
@@ -510,48 +360,26 @@
             }
         }
 
-        function init() {
-            particles = [];
-            const text = "MİRAİ";
-            ctx.fillStyle = 'white';
-            let fontSize = Math.min(w / 3.8, 140); // Mobilde harflerin taşmaması için oran hassaslaştırıldı
-            ctx.font = '900 ' + fontSize + 'px sans-serif';
-            ctx.textAlign = 'center'; 
-            ctx.textBaseline = 'middle';
+        function initParticles() {
+            particles = []; const text = "MİRAİ"; ctx.fillStyle = 'white';
+            ctx.font = '900 ' + Math.min(w / 3.8, 140) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(text, w / 2, h * 0.12); 
-
-            const textCoordinates = ctx.getImageData(0, 0, w, h);
-            ctx.clearRect(0, 0, w, h);
-
+            const textCoordinates = ctx.getImageData(0, 0, w, h); ctx.clearRect(0, 0, w, h);
             for (let y = 0; y < textCoordinates.height; y += 6) {
                 for (let x = 0; x < textCoordinates.width; x += 6) {
                     if (textCoordinates.data[(y * 4 * textCoordinates.width) + (x * 4) + 3] > 128) {
-                        let color = koyuMorTonlari[Math.floor(Math.random() * koyuMorTonlari.length)];
-                        particles.push(new Particle(x, y, color));
+                        particles.push(new Particle(x, y, koyuMorTonlari[Math.floor(Math.random() * koyuMorTonlari.length)]));
                     }
                 }
             }
         }
-
-        function animate() {
+        function animateParticles() {
             ctx.clearRect(0, 0, w, h);
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-            }
-            requestAnimationFrame(animate);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
         }
-
-        setTimeout(() => {
-            init();
-            animate();
-        }, 100);
-
-        window.addEventListener('resize', () => {
-            w = canvas.width = window.innerWidth;
-            h = canvas.height = window.innerHeight;
-            init();
-        });
+        setTimeout(() => { initParticles(); animateParticles(); }, 100);
+        window.addEventListener('resize', () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; initParticles(); });
     </script>
 </body>
 </html>
