@@ -33,7 +33,7 @@
             pointer-events: none; 
         }
 
-        #snowCanvas {
+        #rainCanvas {
             position: fixed; top: 0; left: 0;
             z-index: 4;
             pointer-events: none;
@@ -42,7 +42,8 @@
         .center-wrapper {
             position: absolute; top: 55%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 340px;
+            width: 90%; /* Mobilde taşmasın diye esnek yapıldı */
+            max-width: 340px; /* PC'de orijinal genişliğini korur */
             display: flex; flex-direction: column; gap: 15px;
             z-index: 5;
         }
@@ -179,6 +180,43 @@
         input[type=range]::-webkit-slider-thumb:hover {
             transform: scale(1.3);
         }
+
+        /* ==========================================
+           TELEFONLAR İÇİN MOBİL OPTİMİZASYON (MEDIA QUERY)
+           ========================================== */
+        @media (max-width: 480px) {
+            .center-wrapper {
+                top: 57%; /* Tepedeki MİRAİ yazısıyla çakışmayı önler */
+                gap: 10px;
+            }
+            .glass-container {
+                padding: 25px 20px; /* Telefonda dikey taşmayı önlemek için daraltıldı */
+            }
+            .profile-wrapper {
+                width: 90px; height: 90px; /* Resim hafif küçültüldü */
+                margin-bottom: 10px;
+            }
+            .username {
+                margin-bottom: 20px;
+                font-size: 1.15rem;
+            }
+            .social-link {
+                padding: 12px 15px; /* Buton yükseklikleri mobil uyumlu yapıldı */
+                margin-bottom: 10px;
+                font-size: 0.9rem;
+            }
+            .social-link i {
+                font-size: 20px;
+                width: 32px;
+            }
+            .music-player {
+                padding: 12px 15px;
+            }
+            .play-btn {
+                width: 40px; height: 40px;
+                font-size: 14px;
+            }
+        }
     </style>
 <base target="_blank">
 </head>
@@ -187,7 +225,7 @@
     <div id="bg-image"></div>
     <div id="overlay"></div>
     <canvas id="canvas"></canvas>
-    <canvas id="snowCanvas"></canvas>
+    <canvas id="rainCanvas"></canvas>
 
     <audio id="bg-music" loop>
         <source src="music.mp3" type="audio/mpeg">
@@ -231,7 +269,7 @@
     </div>
 
     <script>
-        // Müzik Oynatıcı
+        // Müzik Oynatıcı Kontrolleri
         const audio = document.getElementById('bg-music');
         const playBtn = document.getElementById('playBtn');
         const playIcon = document.getElementById('playIcon');
@@ -240,19 +278,29 @@
 
         audio.volume = volumeSlider.value;
 
+        // Müzik Durum Güncelleme Fonksiyonu
+        function setMusicPlayingUI() {
+            playIcon.classList.remove('fa-play');
+            playIcon.classList.add('fa-pause');
+            songDisplay.style.textShadow = '0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff';
+            songDisplay.style.color = '#ffb3ff';
+        }
+
+        function setMusicPausedUI() {
+            playIcon.classList.remove('fa-pause');
+            playIcon.classList.add('fa-play');
+            songDisplay.style.textShadow = '0 0 5px #a020f0, 0 0 10px #a020f0, 0 0 20px #a020f0, 0 0 40px #a020f0';
+            songDisplay.style.color = '#fff';
+        }
+
+        // Manuel Tıklama Dinleyicisi
         playBtn.addEventListener('click', () => {
             if (audio.paused) {
                 audio.play();
-                playIcon.classList.remove('fa-play');
-                playIcon.classList.add('fa-pause');
-                songDisplay.style.textShadow = '0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff';
-                songDisplay.style.color = '#ffb3ff';
+                setMusicPlayingUI();
             } else {
                 audio.pause();
-                playIcon.classList.remove('fa-pause');
-                playIcon.classList.add('fa-play');
-                songDisplay.style.textShadow = '0 0 5px #a020f0, 0 0 10px #a020f0, 0 0 20px #a020f0, 0 0 40px #a020f0';
-                songDisplay.style.color = '#fff';
+                setMusicPausedUI();
             }
         });
 
@@ -261,89 +309,127 @@
         });
 
         // ==========================================
-        // KAR YAĞIŞI EFEKTİ
+        // GİRDİĞİNDE DİREKT ÇALMA (AUTOPLAY MOTORU)
         // ==========================================
-        const snowCanvas = document.getElementById('snowCanvas');
-        const sCtx = snowCanvas.getContext('2d');
-        let snowflakes = [];
-
-        function resizeSnow() {
-            snowCanvas.width = window.innerWidth;
-            snowCanvas.height = window.innerHeight;
+        function tryAutoplay() {
+            audio.play().then(() => {
+                // Tarayıcı izin verirse direkt çalar ve UI güncellenir
+                setMusicPlayingUI();
+            }).catch(err => {
+                // Tarayıcı engellerse, kullanıcının ekrandaki İLK DOKUNUŞUNDA tetiklenir
+                console.log("Autoplay engellendi. İlk etkileşimle müzik başlayacak.");
+                
+                const playOnFirstInteraction = () => {
+                    audio.play().then(() => {
+                        setMusicPlayingUI();
+                        // Dinleyicileri temizle ki her tıkta çalışmasın
+                        window.removeEventListener('click', playOnFirstInteraction);
+                        window.removeEventListener('touchstart', playOnFirstInteraction);
+                    });
+                };
+                
+                window.addEventListener('click', playOnFirstInteraction);
+                window.addEventListener('touchstart', playOnFirstInteraction);
+            });
         }
-        window.addEventListener('resize', resizeSnow);
-        resizeSnow();
 
-        class Snowflake {
+        // Sayfa tamamen hazır olunca autoplay sistemini ateşle
+        window.addEventListener('DOMContentLoaded', tryAutoplay);
+
+
+        // ==========================================
+        // CAMA DÜŞEN SU DAMLALARI EFEKTİ
+        // ==========================================
+        const rainCanvas = document.getElementById('rainCanvas');
+        const rCtx = rainCanvas.getContext('2d');
+        let raindrops = [];
+
+        function resizeRain() {
+            rainCanvas.width = window.innerWidth;
+            rainCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeRain);
+        resizeRain();
+
+        class RainDrop {
             constructor() {
                 this.reset(true);
             }
 
             reset(initial = false) {
-                this.x = Math.random() * snowCanvas.width;
-                this.y = initial ? Math.random() * snowCanvas.height : -10;
-                this.size = Math.random() * 2.5 + 0.8;
-                this.speedY = Math.random() * 1.5 + 0.5;
-                this.speedX = (Math.random() - 0.5) * 0.8;
-                this.opacity = Math.random() * 0.6 + 0.2;
-                this.sway = Math.random() * Math.PI * 2;
-                this.swaySpeed = Math.random() * 0.02 + 0.01;
+                this.x = Math.random() * rainCanvas.width;
+                this.y = initial ? Math.random() * rainCanvas.height : -20;
+                this.r = Math.random() * 2.5 + 1;
+                this.speedY = Math.random() * 0.5 + 0.1;
+                this.opacity = Math.random() * 0.4 + 0.2;
             }
 
             update() {
-                this.sway += this.swaySpeed;
-                this.y += this.speedY;
-                this.x += this.speedX + Math.sin(this.sway) * 0.5;
-
-                // Ekran dışına çıkınca tekrar başa al (birikme yok)
-                if (this.y > snowCanvas.height + 10) {
-                    this.reset();
+                if (Math.random() < 0.005) {
+                    this.speedY += Math.random() * 2 + 1;
                 }
-                if (this.x > snowCanvas.width + 10) {
-                    this.x = -10;
-                } else if (this.x < -10) {
-                    this.x = snowCanvas.width + 10;
+                this.speedY *= 0.98;
+                if(this.speedY < 0.2) this.speedY = 0.2 + Math.random() * 0.5;
+
+                this.y += this.speedY;
+
+                if (this.y > rainCanvas.height + 20) {
+                    this.reset();
                 }
             }
 
             draw() {
-                sCtx.save();
-                sCtx.globalAlpha = this.opacity;
-                sCtx.fillStyle = '#ffffff';
-                sCtx.beginPath();
-                sCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                sCtx.fill();
+                rCtx.save();
+                rCtx.globalAlpha = this.opacity;
+                
+                rCtx.beginPath();
+                rCtx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                rCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                rCtx.fill();
+                
+                rCtx.beginPath();
+                rCtx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.4, 0, Math.PI * 2);
+                rCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                rCtx.fill();
 
-                // Hafif glow
-                sCtx.shadowBlur = 8;
-                sCtx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-                sCtx.beginPath();
-                sCtx.arc(this.x, this.y, this.size * 0.6, 0, Math.PI * 2);
-                sCtx.fill();
-                sCtx.restore();
+                rCtx.beginPath();
+                rCtx.arc(this.x + this.r * 0.2, this.y + this.r * 0.3, this.r * 0.3, 0, Math.PI * 2);
+                rCtx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                rCtx.fill();
+                
+                rCtx.restore();
+                
+                if (this.speedY > 1.5) {
+                    rCtx.beginPath();
+                    rCtx.moveTo(this.x, this.y - this.r);
+                    rCtx.lineTo(this.x, this.y - this.r - this.speedY * 4);
+                    rCtx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.3})`;
+                    rCtx.lineWidth = this.r * 0.8;
+                    rCtx.stroke();
+                }
             }
         }
 
-        function initSnow() {
-            snowflakes = [];
-            const count = Math.min(Math.floor(window.innerWidth / 12), 120);
-            for(let i = 0; i < count; i++) snowflakes.push(new Snowflake());
+        function initRain() {
+            raindrops = [];
+            const count = Math.min(Math.floor(window.innerWidth / 15), 150);
+            for(let i = 0; i < count; i++) raindrops.push(new RainDrop());
         }
 
-        function animateSnow() {
-            sCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
-            snowflakes.forEach(f => {
-                f.update();
-                f.draw();
+        function animateRain() {
+            rCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+            raindrops.forEach(d => {
+                d.update();
+                d.draw();
             });
-            requestAnimationFrame(animateSnow);
+            requestAnimationFrame(animateRain);
         }
 
-        initSnow();
-        animateSnow();
+        initRain();
+        animateRain();
 
         // ==========================================
-        // MİRAİ KAPALI MOR PARÇACIK SİSTEMİ
+        // MİRAİ KAPALI MOR PARÇACIK SİSTEMİ (MOBİL UYUMLU DOKUNMATİK)
         // ==========================================
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -352,18 +438,37 @@
         let particles = [];
         let mouse = { x: -1000, y: -1000, radius: 120 };
 
-        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('mouseout', () => { mouse.x = -1000; mouse.y = -1000; });
+        // Hem Fare Hareketlerini Hem de Mobil Dokunmaları Dinleyen Birleşik Yapı
+        const handleInteraction = (e) => {
+            if (e.touches && e.touches.length > 0) {
+                // Mobil Dokunma Koordinatları
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY;
+            } else {
+                // PC Fare Koordinatları
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            }
+        };
+
+        window.addEventListener('mousemove', handleInteraction);
+        window.addEventListener('touchmove', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction);
+
+        // Parmağı Ekrandan Çekince veya Fare Çıkınca Koordinatları Sıfırla
+        const clearInteraction = () => { mouse.x = -1000; mouse.y = -1000; };
+        window.addEventListener('mouseout', clearInteraction);
+        window.addEventListener('touchend', clearInteraction);
 
         const koyuMorTonlari = [
-            'rgba(75, 0, 130, 0.9)',      // Indigo
-            'rgba(106, 13, 173, 0.9)',    // Mor
-            'rgba(85, 0, 130, 0.9)',      // Koyu mor
-            'rgba(128, 0, 128, 0.85)',    // Purple
-            'rgba(102, 51, 153, 0.9)',    // Rebecca Purple
-            'rgba(139, 0, 139, 0.85)',    // Dark Magenta
-            'rgba(148, 0, 211, 0.85)',    // Dark Violet
-            'rgba(153, 50, 204, 0.85)'    // Dark Orchid
+            'rgba(75, 0, 130, 0.9)',
+            'rgba(106, 13, 173, 0.9)',
+            'rgba(85, 0, 130, 0.9)',
+            'rgba(128, 0, 128, 0.85)',
+            'rgba(102, 51, 153, 0.9)',
+            'rgba(139, 0, 139, 0.85)',
+            'rgba(148, 0, 211, 0.85)',
+            'rgba(153, 50, 204, 0.85)'
         ];
 
         class Particle {
@@ -409,7 +514,7 @@
             particles = [];
             const text = "MİRAİ";
             ctx.fillStyle = 'white';
-            let fontSize = Math.min(w / 4, 150);
+            let fontSize = Math.min(w / 3.8, 140); // Mobilde harflerin taşmaması için oran hassaslaştırıldı
             ctx.font = '900 ' + fontSize + 'px sans-serif';
             ctx.textAlign = 'center'; 
             ctx.textBaseline = 'middle';
