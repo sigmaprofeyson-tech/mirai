@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>MİRAİ Social</title>
+    <link id="dynamicFavicon" rel="icon" type="image/x-icon" href="">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           TEMEL AYARLAR & KAYDIRMA ÇUBUĞU (SCROLLBAR)
+           ========================================= */
+        body, html {
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #050505; 
+            /* Mobilde içeriğin kesilmemesi için dikey kaydırmaya izin veriyoruz */
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Özel Scrollbar Tasarımı */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: rgba(160, 32, 240, 0.5); border-radius: 4px; }
+
+        /* =========================================
+           ARKA PLAN VE EFEKT KATMANLARI
+           ========================================= */
+        #bg-image {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            z-index: 1; transition: opacity 0.5s ease;
+        }
+
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 2; 
+        }
+
+        #canvas, #effectCanvas {
+            position: fixed; top: 0; left: 0; pointer-events: none;
+        }
+        #canvas { z-index: 3; } /* MİRAİ Parçacıkları */
+        #effectCanvas { z-index: 4; } /* Kar Yağışı */
+
+        /* =========================================
+           ANA İÇERİK KUTUSU
+           ========================================= */
+        .center-wrapper {
+            position: relative;
+            margin: 0 auto;
+            width: 90%; 
+            max-width: 340px; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+            gap: 15px; 
+            z-index: 5;
+            padding: 40px 0; /* Mobilde scroll payı */
+        }
+
+        /* CAM EFEKTİ (GLASSMORPHISM) */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(160, 32, 240, 0.05);
+        }
+
+        .glass-container {
+            width: 100%; 
+            padding: 40px 25px; 
+            box-sizing: border-box;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+        }
+
+        /* =========================================
+           PROFİL RESMİ VE İSİM
+           ========================================= */
+        .profile-wrapper {
+            position: relative; 
+            width: 110px; 
+            height: 110px; 
+            margin-bottom: 15px;
+            border-radius: 50%; 
+            padding: 3px;
+            background: linear-gradient(135deg, #a020f0, #ff00ff);
+            box-shadow: 0 0 20px rgba(160, 32, 240, 0.5);
+            transition: transform 0.3s ease;
+        }
+        
+        .profile-wrapper:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(160, 32, 240, 0.7);
+        }
+
+        .profile-wrapper img {
+            width: 100%; height: 100%; 
+            border-radius: 50%; 
+            object-fit: cover;
+            opacity: 0; 
+            transition: opacity 0.5s ease;
+        }
+
+        .username {
+            color: #fff; 
+            font-size: 1.5rem; 
+            font-family: 'Montserrat', sans-serif; 
+            font-weight: 800; 
+            margin-bottom: 30px; 
+            letter-spacing: 5px; 
+            text-transform: uppercase; 
+            text-shadow: 0 0 15px rgba(160, 32, 240, 0.8), 0 0 30px rgba(160, 32, 240, 0.4); 
+        }
+
+        /* =========================================
+           SOSYAL MEDYA LİNKLERİ
+           ========================================= */
+        .social-link {
+            display: flex; 
+            align-items: center; 
+            width: 100%; 
+            padding: 15px 20px; 
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 15px; 
+            color: white; 
+            text-decoration: none; 
+            font-weight: bold; 
+            letter-spacing: 1px;
+            box-sizing: border-box; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; 
+            overflow: hidden;
+        }
+
+        .social-link i { 
+            font-size: 24px; 
+            width: 40px; 
+            text-align: center; 
+            transition: transform 0.3s;
+        }
+
+        /* Parlama Efekti */
+        .social-link::before {
+            content: ''; 
+            position: absolute; 
+            top: 0; 
+            left: -100%; 
+            width: 50%; 
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.5s;
+        }
+
+        .social-link:hover:not(.disabled) {
+            background: rgba(160, 32, 240, 0.15); 
+            border-color: rgba(160, 32, 240, 0.5);
+            transform: translateY(-5px) scale(1.02); 
+            box-shadow: 0 10px 25px rgba(160, 32, 240, 0.4);
+        }
+
+        .social-link:hover:not(.disabled) i {
+            transform: scale(1.1);
+        }
+
+        .social-link:hover:not(.disabled)::before { 
+            left: 100%; 
+        }
+
+        .social-link:active:not(.disabled) {
+            transform: translateY(-2px) scale(1);
+        }
+
+        .disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+        }
+        .disabled:hover { 
+            border-color: rgba(255, 255, 255, 0.1); 
+        }
+
+        /* =========================================
+           MÜZİK ÇALAR (MUSIC PLAYER)
+           ========================================= */
+        .music-player {
+            width: 100%; 
+            padding: 15px 20px; 
+            box-sizing: border-box; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border-radius: 20px;
+        }
+
+        .play-btn {
+            background: rgba(160, 32, 240, 0.2); 
+            border: 1px solid rgba(160, 32, 240, 0.5);
+            color: white; 
+            width: 45px; 
+            height: 45px; 
+            border-radius: 50%;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: all 0.3s; 
+            box-shadow: 0 0 10px rgba(160, 32, 240, 0.3); 
+            flex-shrink: 0;
+        }
+
+        .play-btn:hover { 
+            background: rgba(160, 32, 240, 0.6); 
+            transform: scale(1.1); 
+        }
+
+        .music-info { 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%; 
+            gap: 8px; 
+            overflow: hidden; 
+        }
+        
+        .song-name-wrapper { 
+            width: 100%; 
+            overflow: hidden; 
+            white-space: nowrap; 
+            position: relative; 
+        }
+        
+        .song-name {
+            display: inline-block; 
+            color: #fff; 
+            font-size: 0.85rem; 
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px; 
+            white-space: nowrap; 
+            animation: neonScroll 8s linear infinite;
+            text-shadow: 0 0 5px #a020f0, 0 0 10px #a020f0, 0 0 20px #a020f0, 0 0 40px #a020f0; 
+            padding-left: 100%;
+        }
+
+        @keyframes neonScroll { 
+            0% { transform: translateX(0); } 
+            100% { transform: translateX(-100%); } 
+        }
+
+        /* Ses Kontrol Çubuğu */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { 
+            width: 100%; height: 4px; cursor: pointer; 
+            background: rgba(255, 255, 255, 0.2); border-radius: 2px; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 12px; width: 12px; border-radius: 50%; background: #a020f0; 
+            cursor: pointer; -webkit-appearance: none; margin-top: -4px;
+            box-shadow: 0 0 10px #a020f0; transition: transform 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+        /* =========================================
+           MOBİL UYUM (RESPONSIVE)
+           ========================================= */
+        @media (max-width: 480px) {
+            .center-wrapper { padding: 30px 0; gap: 10px; }
+            .glass-container { padding: 25px 20px; }
+            .profile-wrapper { width: 90px; height: 90px; margin-bottom: 10px; }
+            .username { margin-bottom: 20px; font-size: 1.25rem; }
+            .social-link { padding: 12px 15px; margin-bottom: 10px; font-size: 0.9rem; }
+            .social-link i { font-size: 20px; width: 32px; }
+            .music-player { padding: 12px 15px; }
+            .play-btn { width: 40px; height: 40px; font-size: 14px; }
+        }
+
+        /* =========================================
+           ÖZEL İMLEÇ (CUSTOM CURSOR)
+           ========================================= */
+        @media (pointer: fine) {
+            body, html, a, button, input {
+                cursor: none !important;
+            }
+        }
+
+        .custom-cursor {
+            position: fixed;
+            top: 0; left: 0;
+            width: 32px; height: 32px;
+            border: 2px solid rgba(160, 32, 240, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 0 15px rgba(160, 32, 240, 0.3);
+            display: none;
+        }
+
+        .custom-cursor-dot {
+            position: fixed;
+            top: 0; left: 0;
+            width: 6px; height: 6px;
+            background-color: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #ff00ff;
+            display: none;
+        }
+
+        /* Hover efekti sınıfı */
+        .custom-cursor.hover {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(160, 32, 240, 0.1);
+            border-color: rgba(255, 0, 255, 0.8);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+        
+        @media (pointer: fine) {
+            .custom-cursor, .custom-cursor-dot {
+                display: block;
+            }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <!-- Özel İmleç -->
+    <div class="custom-cursor" id="customCursor"></div>
+    <div class="custom-cursor-dot" id="customCursorDot"></div>
+
+    <div id="bg-image"></div>
+    <div id="overlay"></div>
+    <!-- Mor Parçacık Tuvali -->
+    <canvas id="canvas"></canvas>
+    <!-- Kar Yağışı Tuvali -->
+    <canvas id="effectCanvas"></canvas>
+
+    <audio id="bg-music" loop></audio>
+
+    <div class="center-wrapper">
+        <div class="glass-panel glass-container">
+            <div class="profile-wrapper">
+                <img src="" alt="Profile" id="profileImg">
+            </div>
+            
+            <div class="username">MİRAİ</div>
+
+            <a href="https://tiktok.com/@mirai.vl" class="social-link">
+                <i class="fab fa-tiktok"></i> TikTok
+            </a>
+            <a href="https://instagram.com/mirai.vl" class="social-link">
+                <i class="fab fa-instagram"></i> Instagram
+            </a>
+            <a href="https://youtube.com/@miraivl" class="social-link">
+                <i class="fab fa-youtube"></i> YouTube
+            </a>
+            <a href="https://tracker.gg/valorant/profile/riot/Mirai%23144hz/overview" class="social-link">
+                <i class="fas fa-crosshairs"></i> Valorant Tracker
+            </a>
+            <div class="social-link disabled">
+                <i class="fab fa-discord"></i> Discord (Yakında)
+            </div>
+        </div>
+
+        <div class="glass-panel music-player">
+            <button class="play-btn" id="playBtn"><i class="fas fa-play" id="playIcon"></i></button>
+            <div class="music-info">
+                <div class="song-name-wrapper"><div class="song-name" id="songDisplay">Yükleniyor...</div></div>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.3">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 🔥 AYAR MERKEZİ 🔥
+        // =========================================================================
+        const SARKI_DOSYASI = "Black Beatles.mp3"; 
+        // =========================================================================
+
+        // --- 1. MÜZİK MOTORU VE AYIKLAYICI ---
+        const audio = document.getElementById('bg-music');
+        const songDisplay = document.getElementById('songDisplay');
+
+        if(SARKI_DOSYASI) {
+            audio.src = SARKI_DOSYASI;
+            audio.load();
+            songDisplay.innerText = SARKI_DOSYASI.replace(/\.mp3$/i, '');
+        }
+
+        // --- 2. HATA VERMEYEN AKILLI GÖRSEL MOTORU ---
+        const resimFormatlari = ['gif', 'jpg', 'png', 'jpeg', 'webp', 'GIF', 'JPG', 'PNG'];
+        
+        const bgImageEl = document.getElementById('bg-image');
+        let bgBulundu = false;
+        resimFormatlari.forEach(ext => {
+            let img = new Image();
+            img.onload = () => { if(!bgBulundu) { bgImageEl.style.backgroundImage = `url('background.${ext}')`; bgBulundu = true; } };
+            img.src = `background.${ext}`;
+        });
+
+        const profileImgEl = document.getElementById('profileImg');
+        const faviconEl = document.getElementById('dynamicFavicon');
+        let profilBulundu = false;
+        resimFormatlari.forEach(ext => {
+            let img = new Image();
+            img.onload = () => {
+                if(!profilBulundu) {
+                    profileImgEl.src = `profile.${ext}`; 
+                    profileImgEl.style.opacity = '1';
+                    if(faviconEl) faviconEl.href = `profile.${ext}`;
+                    profilBulundu = true;
+                }
+            };
+            img.src = `profile.${ext}`;
+        });
+
+        setTimeout(() => {
+            if(!profilBulundu) { 
+                profileImgEl.src = 'https://via.placeholder.com/150/111/fff?text=MIRAI'; 
+                profileImgEl.style.opacity = '1'; 
+            }
+        }, 2000);
+
+        // --- 3. MÜZİK ÇALAR ARAYÜZ KONTROLLERİ ---
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        const volumeSlider = document.getElementById('volumeSlider');
+        audio.volume = volumeSlider.value;
+
+        function setMusicPlayingUI() {
+            playIcon.classList.remove('fa-play'); playIcon.classList.add('fa-pause');
+            songDisplay.style.textShadow = '0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff00ff';
+            songDisplay.style.color = '#ffb3ff';
+        }
+
+        function setMusicPausedUI() {
+            playIcon.classList.remove('fa-pause'); playIcon.classList.add('fa-play');
+            songDisplay.style.textShadow = '0 0 5px #a020f0, 0 0 10px #a020f0, 0 0 20px #a020f0, 0 0 40px #a020f0';
+            songDisplay.style.color = '#fff';
+        }
+
+        playBtn.addEventListener('click', () => {
+            if (audio.paused) { audio.play(); setMusicPlayingUI(); } 
+            else { audio.pause(); setMusicPausedUI(); }
+        });
+
+        volumeSlider.addEventListener('input', (e) => { audio.volume = e.target.value; });
+
+        function tryAutoplay() {
+            audio.play().then(() => { setMusicPlayingUI(); }).catch(() => {
+                const playOnFirstInteraction = () => {
+                    audio.play().then(() => { setMusicPlayingUI(); });
+                    window.removeEventListener('click', playOnFirstInteraction);
+                    window.removeEventListener('touchstart', playOnFirstInteraction);
+                };
+                window.addEventListener('click', playOnFirstInteraction);
+                window.addEventListener('touchstart', playOnFirstInteraction);
+            });
+        }
+        window.addEventListener('DOMContentLoaded', tryAutoplay);
+
+        // =========================================================================
+        // ❄️ 4. SAKİN VE SİNEMATİK KAR YAĞIŞI MOTORU (PERFORMANS İYİLEŞTİRMELİ) 🔥
+        // =========================================================================
+        const effectCanvas = document.getElementById('effectCanvas');
+        const eCtx = effectCanvas.getContext('2d');
+        let snowflakes = [];
+
+        // OPTİMİZASYON: Kar tanesindeki glow (shadowBlur) efektini her karede çizmek CPU'yu çok yorar.
+        // Bu yüzden kar tanesini bir kere offscreen canvas'a çizip, sadece onu kopyalayarak ekrana basıyoruz.
+        const snowCacheCanvas = document.createElement('canvas');
+        const maxRadius = 3;
+        const maxBlur = maxRadius * 2;
+        const cacheSize = Math.ceil((maxRadius + maxBlur) * 2);
+        snowCacheCanvas.width = cacheSize;
+        snowCacheCanvas.height = cacheSize;
+        const sCacheCtx = snowCacheCanvas.getContext('2d');
+        sCacheCtx.beginPath();
+        sCacheCtx.arc(cacheSize / 2, cacheSize / 2, maxRadius, 0, Math.PI * 2);
+        sCacheCtx.fillStyle = '#ffffff';
+        sCacheCtx.shadowBlur = maxBlur;
+        sCacheCtx.shadowColor = '#ffffff';
+        sCacheCtx.fill();
+
+        class Snowflake {
+            constructor(initial = false) { this.reset(initial); }
+
+            reset(initial = false) {
+                this.x = Math.random() * effectCanvas.width;
+                this.y = initial ? Math.random() * effectCanvas.height : -20;
+                this.r = Math.random() * 2.2 + 0.8; 
+                this.speedY = Math.random() * 0.8 + 0.3; 
+                this.speedX = (Math.random() - 0.5) * 0.5; 
+                this.sway = Math.random() * Math.PI * 2; 
+                this.swaySpeed = Math.random() * 0.01 + 0.005;
+                this.opacity = Math.random() * 0.6 + 0.2;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + Math.sin(this.sway) * 0.4;
+                this.sway += this.swaySpeed;
+
+                if (this.y > effectCanvas.height + 20 || this.x < -20 || this.x > effectCanvas.width + 20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                eCtx.globalAlpha = this.opacity;
+                // Çizilen önbellek (cache) görselini boyutlandırıp ekrana basıyoruz
+                const scale = this.r / maxRadius;
+                const drawSize = cacheSize * scale;
+                eCtx.drawImage(snowCacheCanvas, this.x - drawSize / 2, this.y - drawSize / 2, drawSize, drawSize);
+            }
+        }
+
+        function initSnow() {
+            snowflakes = [];
+            const count = Math.min(Math.floor(window.innerWidth / 18), 70); 
+            for(let i = 0; i < count; i++) snowflakes.push(new Snowflake(true));
+        }
+
+        // --- 5. MİRAİ KAPALI MOR PARÇACIK SİSTEMİ ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let w = canvas.width = window.innerWidth; 
+        let h = canvas.height = window.innerHeight;
+        let particles = []; 
+        let mouse = { x: -1000, y: -1000, radius: 120 };
+
+        const handleInteraction = (e) => {
+            if (e.touches && e.touches.length > 0) { 
+                mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; 
+            } else { 
+                mouse.x = e.clientX; mouse.y = e.clientY; 
+            }
+        };
+        
+        window.addEventListener('mousemove', handleInteraction); 
+        window.addEventListener('touchmove', handleInteraction, {passive: true}); 
+        window.addEventListener('touchstart', handleInteraction, {passive: true});
+        
+        const clearInteraction = () => { mouse.x = -1000; mouse.y = -1000; };
+        window.addEventListener('mouseout', clearInteraction); 
+        window.addEventListener('touchend', clearInteraction);
+
+        const koyuMorTonlari = [
+            'rgba(75, 0, 130, 0.9)', 'rgba(106, 13, 173, 0.9)', 
+            'rgba(85, 0, 130, 0.9)', 'rgba(128, 0, 128, 0.85)', 
+            'rgba(102, 51, 153, 0.9)', 'rgba(139, 0, 139, 0.85)', 
+            'rgba(148, 0, 211, 0.85)', 'rgba(153, 50, 204, 0.85)'
+        ];
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = Math.random() * w; 
+                this.y = Math.random() * h; 
+                this.baseX = x; 
+                this.baseY = y;
+                this.size = Math.random() * 2.5 + 1.8; 
+                this.color = color; 
+                this.density = (Math.random() * 20) + 5;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath(); 
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); 
+                ctx.fill(); 
+            }
+            update() {
+                let dx = mouse.x - this.x; 
+                let dy = mouse.y - this.y; 
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < mouse.radius) {
+                    let forceDirectionX = dx / distance; 
+                    let forceDirectionY = dy / distance; 
+                    let force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= forceDirectionX * force * this.density; 
+                    this.y -= forceDirectionY * force * this.density;
+                } else {
+                    if (this.x !== this.baseX) { this.x -= (this.x - this.baseX) / 15; }
+                    if (this.y !== this.baseY) { this.y -= (this.y - this.baseY) / 15; }
+                }
+            }
+        }
+
+        function initParticles() {
+            particles = []; 
+            const text = "MİRAİ"; 
+            ctx.fillStyle = 'white';
+            ctx.font = '900 ' + Math.min(w / 3.8, 140) + 'px sans-serif'; 
+            ctx.textAlign = 'center'; 
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, w / 2, h * 0.12); 
+            
+            const textCoordinates = ctx.getImageData(0, 0, w, h); 
+            ctx.clearRect(0, 0, w, h);
+            
+            for (let y = 0; y < textCoordinates.height; y += 6) {
+                for (let x = 0; x < textCoordinates.width; x += 6) {
+                    if (textCoordinates.data[(y * 4 * textCoordinates.width) + (x * 4) + 3] > 128) {
+                        particles.push(new Particle(x, y, koyuMorTonlari[Math.floor(Math.random() * koyuMorTonlari.length)]));
+                    }
+                }
+            }
+        }
+
+        // =========================================================================
+        // 🔄 TEK BİR ANA DÖNGÜ (OPTİMİZASYON)
+        // Kar ve parçacıkları tek RequestAnimationFrame ile çiziyoruz
+        // =========================================================================
+        function mainAnimLoop() {
+            // Kar Yağışı Animasyonu
+            eCtx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
+            snowflakes.forEach(s => { s.update(); s.draw(); });
+            eCtx.globalAlpha = 1; // Alpha'yı sıfırla
+
+            // Parçacık Animasyonu
+            ctx.clearRect(0, 0, w, h);
+            ctx.save(); 
+            ctx.shadowBlur = 20; 
+            // Shadow'u topluca uygulayarak performans kazanıyoruz
+            ctx.shadowColor = 'rgba(160, 32, 240, 0.8)'; 
+            particles.forEach(p => { p.update(); p.draw(); });
+            ctx.restore();
+
+            requestAnimationFrame(mainAnimLoop);
+        }
+
+        // Boyutlandırma (Resize) ayarları
+        function handleResize() {
+            w = canvas.width = window.innerWidth; 
+            h = canvas.height = window.innerHeight; 
+            effectCanvas.width = window.innerWidth; 
+            effectCanvas.height = window.innerHeight;
+            initParticles();
+            initSnow();
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        // --- 6. ÖZEL İMLEÇ (CUSTOM CURSOR) ---
+        const cursor = document.getElementById('customCursor');
+        const cursorDot = document.getElementById('customCursorDot');
+        
+        // Sadece dokunmatik olmayan bilgisayar ekranlarında çalıştır
+        if (window.matchMedia("(pointer: fine)").matches) {
+            let cursorX = window.innerWidth / 2;
+            let cursorY = window.innerHeight / 2;
+            let dotX = cursorX;
+            let dotY = cursorY;
+            
+            window.addEventListener('mousemove', (e) => {
+                dotX = e.clientX;
+                dotY = e.clientY;
+            });
+
+            // İmleç animasyonu (yumuşak takip)
+            function animateCursor() {
+                // Nokta farenin tam konumuna anında gider
+                cursorDot.style.left = `${dotX}px`;
+                cursorDot.style.top = `${dotY}px`;
+                
+                // Dış halka yavaşça arkasından takip eder
+                cursorX += (dotX - cursorX) * 0.2;
+                cursorY += (dotY - cursorY) * 0.2;
+                cursor.style.left = `${cursorX}px`;
+                cursor.style.top = `${cursorY}px`;
+                
+                requestAnimationFrame(animateCursor);
+            }
+            animateCursor();
+
+            // Tıklanabilir elementler üzerinde halkanın büyümesi efekti
+            const hoverElements = document.querySelectorAll('a, button, input[type="range"], .profile-wrapper');
+            hoverElements.forEach(el => {
+                el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+                el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+            });
+        }
+
+        // Başlat
+        handleResize();
+        setTimeout(() => { 
+            mainAnimLoop(); 
+        }, 100);
+
+    </script>
+</body>
+</html>
